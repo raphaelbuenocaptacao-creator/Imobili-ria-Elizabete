@@ -1,0 +1,15 @@
+{
+  "name": "Elizabeth Imóveis",
+  "short_name": "Elizabeth",
+  "description": "Curadoria de imóveis especiais para comprar, vender, alugar e investir.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbfaf6",
+  "theme_color": "#102d26",
+  "orientation": "portrait-primary",
+  "icons": [
+    {"src":"assets/logo.svg","sizes":"any","type":"image/svg+xml","purpose":"any"},
+    {"src":"assets/logo-maskable.svg","sizes":"any","type":"image/svg+xml","purpose":"maskable"}
+  ]
+}
