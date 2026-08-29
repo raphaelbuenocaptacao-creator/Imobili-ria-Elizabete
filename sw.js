@@ -1,6 +1,6 @@
-const CACHE_NAME='elizabeth-imoveis-v3';
+const CACHE_NAME='elizabeth-imoveis-v4-safe-shell';
 const STATIC_ASSETS=['./','./index.html','./styles.css','./app.js','./manifest.webmanifest','./icon-192.svg','./icon-512.svg','./icon-512-maskable.svg','./assets/logo.svg','./assets/logo-maskable.svg'];
-const PRIVATE_PATH_RE=/\/(api|auth|login|logout|admin|session|sessions|token|tokens|account|profile|me)(\/|$)/i;
+const PRIVATE_PATH_RE=/\/(api|auth|login|logout|admin|session|sessions|token|tokens|password|account|profile|me)(\/|$)/i;
 
 function isPrivate(request,url){
   return request.method!=='GET'||request.headers.has('authorization')||url.origin!==self.location.origin||PRIVATE_PATH_RE.test(url.pathname);
@@ -33,7 +33,7 @@ self.addEventListener('fetch',event=>{
   }
 
   if(!isStaticShell(request)) return;
-  event.respondWith(caches.match(request).then(hit=>hit||fetch(request).then(response=>{
+  event.respondWith(caches.match(request).then(hit=>hit||fetch(request,{cache:'no-store'}).then(response=>{
     if(response.ok&&response.type==='basic'){
       const copy=response.clone();
       event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.put(request,copy)));
