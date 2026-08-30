@@ -1,12 +1,19 @@
-const CACHE_NAME='elizabeth-imoveis-v4-safe-shell';
+const CACHE_NAME='elizabeth-imoveis-v5-safe-shell';
 const STATIC_ASSETS=['./','./index.html','./styles.css','./app.js','./manifest.webmanifest','./icon-192.svg','./icon-512.svg','./icon-512-maskable.svg','./assets/logo.svg','./assets/logo-maskable.svg'];
 const PRIVATE_PATH_RE=/\/(api|auth|login|logout|admin|session|sessions|token|tokens|password|account|profile|me)(\/|$)/i;
+const SENSITIVE_QUERY_RE=/^(token|access_token|refresh_token|password|passwd|secret|session|auth|authorization|api_key|apikey|key|code|credential|credentials)$/i;
 
-function isPrivate(request,url){
-  return request.method!=='GET'||request.headers.has('authorization')||url.origin!==self.location.origin||PRIVATE_PATH_RE.test(url.pathname);
+function hasSensitiveQuery(url){
+  for(const key of url.searchParams.keys()) if(SENSITIVE_QUERY_RE.test(key)) return true;
+  return false;
 }
 
-function isStaticShell(request){
+function isPrivate(request,url){
+  return request.method!=='GET'||request.headers.has('authorization')||request.headers.has('cookie')||url.origin!==self.location.origin||PRIVATE_PATH_RE.test(url.pathname)||hasSensitiveQuery(url);
+}
+
+function isStaticShell(request,url){
+  if(url.search) return false;
   return STATIC_ASSETS.some(path=>request.url===new URL(path,self.registration.scope).href);
 }
 
@@ -32,7 +39,7 @@ self.addEventListener('fetch',event=>{
     return;
   }
 
-  if(!isStaticShell(request)) return;
+  if(!isStaticShell(request,url)) return;
   event.respondWith(caches.match(request).then(hit=>hit||fetch(request,{cache:'no-store'}).then(response=>{
     if(response.ok&&response.type==='basic'){
       const copy=response.clone();
