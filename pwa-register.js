@@ -5,7 +5,7 @@
 
   async function ensureRegistration() {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js', {
+      const registration = await navigator.serviceWorker.register('./sw.js?v=8-raster-safe', {
         scope: './',
         updateViaCache: 'none'
       });
