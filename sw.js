@@ -1,9 +1,8 @@
 const CACHE_PREFIX='elizabete-imoveis-';
-const CACHE_NAME=`${CACHE_PREFIX}v8-raster-safe-shell`;
+const CACHE_NAME=`${CACHE_PREFIX}v9-private-vary-star-safe-shell`;
 const STATIC_ASSETS=['./','./index.html','./styles.css','./app.js','./pwa-register.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-512-maskable.png'];
 const PRIVATE_PATH_RE=/\/(api|auth|login|logout|admin|session|sessions|token|tokens|password|account|profile|me)(\/|$)/i;
 const SENSITIVE_QUERY_RE=/^(token|access_token|refresh_token|id_token|jwt|password|passwd|secret|client_secret|session|auth|authorization|api_key|apikey|key|code|credential|credentials|assertion|samlresponse|signature|sig)$/i;
-const SENSITIVE_VARY_RE=/(^|,)\s*(cookie|authorization)\s*(,|$)/i;
 
 function hasSensitiveQuery(url){
   for(const key of url.searchParams.keys()) if(SENSITIVE_QUERY_RE.test(key)) return true;
@@ -19,11 +18,18 @@ function isStaticShell(request,url){
   return STATIC_ASSETS.some(path=>request.url===new URL(path,self.registration.scope).href);
 }
 
+function hasUnsafeVary(response){
+  const vary=(response.headers.get('vary')||'').toLowerCase();
+  return vary.split(',').some(value=>{
+    const key=value.trim();
+    return key==='*'||key==='cookie'||key==='authorization';
+  });
+}
+
 function isSafeResponse(response){
   if(!response||!response.ok||response.type!=='basic'||response.status===206||response.redirected) return false;
   if(response.headers.has('content-range')||response.headers.has('set-cookie')) return false;
-  const vary=response.headers.get('vary')||'';
-  if(vary==='*'||SENSITIVE_VARY_RE.test(vary)) return false;
+  if(hasUnsafeVary(response)) return false;
   const cacheControl=(response.headers.get('cache-control')||'').toLowerCase();
   if(cacheControl.includes('private')||cacheControl.includes('no-store')) return false;
   return true;
