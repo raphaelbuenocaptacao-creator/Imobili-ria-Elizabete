@@ -1,5 +1,5 @@
 const CACHE_PREFIX='elizabete-imoveis-';
-const CACHE_NAME=`${CACHE_PREFIX}v9-private-vary-star-safe-shell`;
+const CACHE_NAME=`${CACHE_PREFIX}v10-private-vary-range-safe-shell`;
 const STATIC_ASSETS=['./','./index.html','./styles.css','./app.js','./pwa-register.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-512-maskable.png'];
 const PRIVATE_PATH_RE=/\/(api|auth|login|logout|admin|session|sessions|token|tokens|password|account|profile|me)(\/|$)/i;
 const SENSITIVE_QUERY_RE=/^(token|access_token|refresh_token|id_token|jwt|password|passwd|secret|client_secret|session|auth|authorization|api_key|apikey|key|code|credential|credentials|assertion|samlresponse|signature|sig)$/i;
@@ -22,7 +22,7 @@ function hasUnsafeVary(response){
   const vary=(response.headers.get('vary')||'').toLowerCase();
   return vary.split(',').some(value=>{
     const key=value.trim();
-    return key==='*'||key==='cookie'||key==='authorization';
+    return key==='*'||key==='cookie'||key==='authorization'||key==='range'||key==='if-range';
   });
 }
 
