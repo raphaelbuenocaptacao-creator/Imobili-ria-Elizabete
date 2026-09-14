@@ -1,6 +1,9 @@
 const fs = require('fs');
 
-const source = fs.readFileSync('sw.js', 'utf8').toLowerCase();
+const sw = fs.readFileSync('sw.js', 'utf8');
+const source = sw.toLowerCase();
+const register = fs.readFileSync('pwa-register.js', 'utf8');
+const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
 
 if (!source.includes("request.headers.has('range')") || !source.includes("request.headers.has('if-range')")) {
   throw new Error('sw.js: Range and If-Range requests must bypass cache');
@@ -17,4 +20,21 @@ if (!unsafeVaryBlock[1].includes("key==='range'") || !unsafeVaryBlock[1].include
   throw new Error('sw.js: Vary: Range and Vary: If-Range must be rejected from cache');
 }
 
-console.log('Elizabete PWA range-vary cache safety verified');
+if (manifest.display !== 'standalone') throw new Error('manifest: display must be standalone');
+if (!manifest.start_url || !manifest.scope) throw new Error('manifest: start_url and scope are required');
+const icon192 = manifest.icons?.find(icon => icon.sizes === '192x192' && icon.type === 'image/png');
+const icon512 = manifest.icons?.find(icon => icon.sizes === '512x512' && icon.type === 'image/png' && icon.purpose === 'any');
+const maskable512 = manifest.icons?.find(icon => icon.sizes === '512x512' && icon.type === 'image/png' && icon.purpose?.includes('maskable'));
+if (!icon192 || !icon512 || !maskable512) throw new Error('manifest: 192, 512 and maskable PNG icons are required');
+for (const icon of [icon192, icon512, maskable512]) {
+  const path = icon.src.replace(/^\.\//, '');
+  if (!fs.existsSync(path)) throw new Error(`manifest: missing icon ${path}`);
+}
+
+if (!register.includes("updateViaCache: 'none'")) throw new Error('pwa-register: updateViaCache must be none');
+if (!register.includes("document.addEventListener('visibilitychange'")) throw new Error('pwa-register: must check updates on foreground');
+if (!register.includes("navigator.serviceWorker.addEventListener('controllerchange'")) throw new Error('pwa-register: must hand off to a new controller');
+if (!register.includes('navigator.serviceWorker.controller')) throw new Error('pwa-register: first install must be distinguished from update');
+if (!register.includes("postMessage({ type: 'SKIP_WAITING' })")) throw new Error('pwa-register: waiting worker must be promoted safely');
+
+console.log('Elizabete PWA cache, manifest and update lifecycle verified');
